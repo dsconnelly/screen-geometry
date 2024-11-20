@@ -67,7 +67,18 @@ class Screen:
         self.rotation = yaw_matrix @ pitch_matrix
 
         if self.radius is None:
-            self.normal = self.rotation @ np.array([0, 0, 1])
+            self.normal = self.rotation[:, 2]
+
+        else:
+            p = self.to_global(np.array([self.width / 2, 0]))
+            self.base = p + self.radius * self.rotation[:, 2]
+            self.axis = self.rotation[:, 1]
+
+            q = self.to_global(np.array([self.width, 0]))
+            a, b = p - self.base, q - self.base
+
+            cosine = (a @ b) / np.linalg.norm(a) / np.linalg.norm(b)
+            self.theta_max = np.arccos(cosine)
 
     def find_intersect(self, ray: np.ndarray) -> np.ndarray:
         """
@@ -77,8 +88,8 @@ class Screen:
         Parameters
         ----------
         ray
-            Array whose three elements correspond to the components of a unit
-            vector at the origin pointing in the desired direction.
+            Array whose three elements correspond to the components of a vector
+            at the origin pointing in the desired direction.
 
         Returns
         -------
@@ -87,17 +98,43 @@ class Screen:
 
         """
 
-        if self.radius is not None:
-            raise NotImplementedError
+        if self.radius is None:
+            t = (self.shift @ self.normal) / (ray @ self.normal)
 
-        p = (self.shift @ self.normal) / (ray @ self.normal) * ray
-        x = self.rotation[:, 0] @ (p - self.shift) + self.width / 2
-        y = self.rotation[:, 1] @ (p - self.shift) + self.height / 2
+            if t < 0:
+                raise NoIntersection
 
-        if not ((0 <= x <= self.width) and (0 <= y <= self.height)):
+            x = self.rotation[:, 0] @ (t * ray - self.shift) + self.width / 2
+            y = self.rotation[:, 1] @ (t * ray - self.shift) + self.height / 2
+
+            if not ((0 <= x <= self.width) and (0 <= y <= self.height)):
+                raise NoIntersection
+            
+            return np.array([x, y])
+        
+        rxa = np.cross(ray, self.axis)
+        t = (rxa @ np.cross(self.base, self.axis) + np.sqrt(
+            self.radius ** 2 * (rxa @ rxa) - (self.base @ rxa) ** 2
+        )) / (rxa @ rxa)
+        
+        h = self.axis @ (t * ray - self.base)
+        if not (0 <= h <= self.height):
             raise NoIntersection
         
-        return np.array([x, y])
+        center = self.base + h * self.rotation[:, 1]
+        a = t * ray - center
+        b = self.to_global(np.array([self.width / 2, h])) - center
+
+        cosine = (a @ b) / np.linalg.norm(a) / np.linalg.norm(b)
+        theta = np.arccos(cosine)
+
+        if theta > self.theta_max:
+            raise NoIntersection
+        
+        d = t * ray - self.to_global(np.array([self.width / 2, h]))
+        sign = np.sign(d @ self.rotation[:, 0])
+
+        return np.array([self.width / 2 + sign * theta * self.radius, h])
 
     def to_global(self, pixels: np.ndarray) -> np.ndarray:
         """
