@@ -2,6 +2,9 @@ from typing import Optional
 
 import numpy as np
 
+class NoIntersection(Exception):
+    pass
+
 class Screen:
     def __init__(
         self,
@@ -51,17 +54,50 @@ class Screen:
 
         pitch_matrix = np.array([
             [1, 0, 0],
-            [0, np.cos(pitch), np.sin(pitch)],
-            [0, -np.sin(pitch), np.cos(pitch)]
+            [0, np.cos(pitch), -np.sin(pitch)],
+            [0, np.sin(pitch), np.cos(pitch)]
         ])
 
         yaw_matrix = np.array([
-            [np.cos(yaw), 0, np.sin(yaw)],
+            [np.cos(yaw), 0, -np.sin(yaw)],
             [0, 1, 0],
-            [-np.sin(yaw), 0, np.cos(yaw)]
+            [np.sin(yaw), 0, np.cos(yaw)]
         ])
 
         self.rotation = yaw_matrix @ pitch_matrix
+
+        if self.radius is None:
+            self.normal = self.rotation @ np.array([0, 0, 1])
+
+    def find_intersect(self, ray: np.ndarray) -> np.ndarray:
+        """
+        Find the pixel coordinates of the intersection of a given ray with this
+        screen, if such an intersection exists.
+
+        Parameters
+        ----------
+        ray
+            Array whose three elements correspond to the components of a unit
+            vector at the origin pointing in the desired direction.
+
+        Returns
+        -------
+        np.ndarray
+            Array of pixel coordinates at the point of intersection.
+
+        """
+
+        if self.radius is not None:
+            raise NotImplementedError
+
+        p = (self.shift @ self.normal) / (ray @ self.normal) * ray
+        x = self.rotation[:, 0] @ (p - self.shift) + self.width / 2
+        y = self.rotation[:, 1] @ (p - self.shift) + self.height / 2
+
+        if not ((0 <= x <= self.width) and (0 <= y <= self.height)):
+            raise NoIntersection
+        
+        return np.array([x, y])
 
     def to_global(self, pixels: np.ndarray) -> np.ndarray:
         """
@@ -96,4 +132,4 @@ class Screen:
             z_local = self.radius * (1 - np.cos(angle))
 
         local = np.array([x_local, y_shift, z_local])
-        return self.rotation.T @ local + self.shift
+        return self.rotation @ local + self.shift

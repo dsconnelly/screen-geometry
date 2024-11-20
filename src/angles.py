@@ -19,3 +19,14 @@ def get_angle(
     
     cosine = (point_1 @ point_2) / norm_1 / norm_2
     return np.rad2deg(np.arccos(cosine))
+
+def get_spherical(point: np.ndarray) -> np.ndarray:
+    """
+    
+    """
+
+    x, y, z = point
+    theta = np.arctan2(x, z)
+    phi = np.arctan2(y, np.sqrt(x ** 2 + z ** 2))
+
+    return np.array([theta, phi])
