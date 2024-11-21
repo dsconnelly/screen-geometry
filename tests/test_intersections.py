@@ -10,13 +10,13 @@ def test_flat_screen_intersections() -> None:
         shift=np.array([0, 0, -3])
     )
 
-    point = screen.find_intersect(np.array([0, 0, -1]))
+    _, point = screen.find_intersect(np.array([0, 0, -1]))
     assert np.allclose(point, np.array([2.5, 0.5]))
 
     a = 1 / np.sqrt(3)
-    point = screen.find_intersect(np.array([a, 0, -1]))
+    _, point = screen.find_intersect(np.array([a, 0, -1]))
     assert np.allclose(point, np.array([2.5 + 3 * a, 0.5]))
 
     a = 1 / np.sqrt(2)
     with pytest.raises(NoIntersection):
-        point = screen.find_intersect(np.array([0, a, -a]))
+        _, point = screen.find_intersect(np.array([0, a, -a]))

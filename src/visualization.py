@@ -9,7 +9,13 @@ from .screens import Screen
 
 def init_plot() -> Axes:
     """
-    
+    Initialize a plot to show 3D screen geometry.
+
+    Returns
+    -------
+    Axes
+        Three-dimensional axis, ready for plotting.
+
     """
 
     fig = plt.figure()
@@ -26,9 +32,19 @@ def init_plot() -> Axes:
 
     return ax
 
-def add_screen(ax: Axes, screen: Screen) -> None:
+def add_screen(ax: Axes, screen: Screen, color: str='k') -> None:
     """
-    
+    Visualize a screen on an initialized axis.
+
+    Parameters
+    ----------
+    ax
+        Three-dimensional axis as returned by `init_plot`.
+    screen
+        Screen object to add to the scene.
+    color
+        Color to render the screen in.
+
     """
 
     xs = np.linspace(0, screen.width, 100)
@@ -36,4 +52,4 @@ def add_screen(ax: Axes, screen: Screen) -> None:
     points = [screen.to_global(np.array([x, y])) for x, y in product(xs, ys)]
     
     x, y, z = np.vstack(points).T
-    ax.scatter(z, x, y, color='royalblue', s=2)
+    ax.scatter(z, x, y, color=color, s=2)
