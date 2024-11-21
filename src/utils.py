@@ -4,6 +4,12 @@ def get_angle(p: np.ndarray, q: np.ndarray) -> float:
     """
     Get the unsigned angle between two vectors in global coordinates.
 
+    Note that this is the "grand" angle - the angle between the vectors in
+    whichever (possibly tilted) plane they lie in. To get a two-component
+    viewing angle, you could use something like
+
+        theta, phi = get_spherical(p) - get_spherical(q)
+
     Parameters
     ----------
     p, q

@@ -38,9 +38,15 @@ def find_screen_and_point(
 
     """
 
+    # Get the location of the fixation in 3D global coordinates.
     fix_point = fix_screen.to_global(fix_pixels)
+
+    # Get the angular direction of the target from the eye by getting the angles
+    # of the fixation and adding on the desired viewing angles.
     theta, phi = np.deg2rad(angles) + get_spherical(fix_point)
 
+    # Convert back out of spherical coordinates to get a ray pointing in the
+    # direction in which the target should appear.
     ray = np.array([
         np.cos(phi) * np.sin(theta),
         np.sin(phi),
@@ -51,6 +57,9 @@ def find_screen_and_point(
     best_pixels = None
     min_dist = np.inf
 
+    # Iterate over all available screens. Since in this code the origin of the
+    # global system is just the eye, we can get the distance of each possible
+    # intersection point as just the norm of the vector. We save the closest.
     for screen in screens:
         try:
             point, pixels = screen.find_intersect(ray)
@@ -65,6 +74,7 @@ def find_screen_and_point(
             continue
 
     if best_screen is None:
+        # None of the screens found an intersection.
         raise RuntimeError('No intersection on any screen was found')
 
     return best_screen, best_pixels
