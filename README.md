@@ -1,2 +1,2 @@
 # screen-geometry
-Some consulting work for Anna Bruns and Denis Pelli.
+Implementation of some screen geometry calculations for the EasyEye software.
